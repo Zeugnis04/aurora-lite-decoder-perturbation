@@ -30,7 +30,7 @@ def rollout(model: AuroraLite, batch: Batch, steps: int) -> Generator[Batch, Non
     batch = batch.to(p.device)
 
     for _ in range(steps):
-        pred, _ = model.forward(batch)  # AuroraLite returns (batch, latent)
+        pred, _ = model.forward(batch)
 
         yield pred
 
