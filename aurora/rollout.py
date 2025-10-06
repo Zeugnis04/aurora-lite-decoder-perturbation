@@ -8,7 +8,7 @@ import torch
 from aurora.batch import Batch
 from aurora.model.aurora_lite import AuroraLite
 
-__all__ = ["rollout"]
+__all__ = ["rollout", "forward_batch"]
 
 
 def rollout(model: AuroraLite, batch: Batch, steps: int) -> Generator[Batch, None, None]:
@@ -46,3 +46,45 @@ def rollout(model: AuroraLite, batch: Batch, steps: int) -> Generator[Batch, Non
                 for k, v in pred.atmos_vars.items()
             },
         )
+
+
+def forward_batch(model: AuroraLite, batch: Batch, steps: int) -> tuple[list[Batch], list[torch.Tensor]]:
+    """Run multiple Aurora forward passes while keeping the internal roll-out state.
+
+    Args:
+        model: AuroraLite model to evaluate.
+        batch: Initial conditions passed to the model.
+        steps: Number of sequential 6-hour steps to evaluate.
+
+    Returns:
+        Tuple containing per-step Batch predictions and latent decoder tensors.
+    """
+    if steps < 1:
+        raise ValueError('steps must be >= 1')
+
+    p = next(model.parameters())
+    batch = batch.type(p.dtype)
+    batch = batch.crop(model.patch_size)
+    batch = batch.to(p.device)
+
+    preds: list[Batch] = []
+    latents: list[torch.Tensor] = []
+
+    for _ in range(steps):
+        pred, latent = model.forward(batch)
+        preds.append(pred)
+        latents.append(latent)
+
+        batch = dataclasses.replace(
+            pred,
+            surf_vars={
+                k: torch.cat([batch.surf_vars[k][:, 1:], v], dim=1)
+                for k, v in pred.surf_vars.items()
+            },
+            atmos_vars={
+                k: torch.cat([batch.atmos_vars[k][:, 1:], v], dim=1)
+                for k, v in pred.atmos_vars.items()
+            },
+        )
+
+    return preds, latents
