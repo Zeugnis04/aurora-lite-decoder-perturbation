@@ -192,3 +192,29 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Project-specific: Large model files and output data
+*.ckpt
+*.pt
+*.pth
+*.h5
+*.hdf5
+
+# Project-specific: Output directories
+pacific_perturbation_precip_outputs/
+figures/
+exported_data/
+MSWEP_local/
+MSWEP_V280/
+
+# Project-specific: Large data files
+*.nc
+*.grib
+*.grb
+*.zarr/
+
+# Project-specific: Generated images and PDFs (optional - uncomment if you want to exclude)
+# *.png
+# *.pdf
+# *.jpg
+# *.jpeg
